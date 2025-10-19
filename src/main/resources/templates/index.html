@@ -52,6 +52,17 @@
 
         .studio-select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
         .studio-option { padding: 8px; }
+
+        .text-danger {
+    color: #dc3545; /* стандартный "danger" красный из Bootstrap */
+    text-decoration: none; /* убираем подчёркивание */
+    cursor: pointer;
+}
+
+.text-danger:hover {
+    color: #a71d2a; /* чуть темнее при наведении */
+    text-decoration: underline; /* можно вернуть подчёркивание при hover */
+}
     </style>
 </head>
 <body>
@@ -475,8 +486,9 @@ function loadBands() {
                     <td>${dateToDisplay}</td>
 
                     <td>
-                        <button onclick="openEditModal(${band.id})">Edit</button>
-                        <button onclick="deleteBand(${band.id})">Delete</button>
+                        <a href="#" onclick="openEditModal(${band.id})">Edit</a>
+                        |
+                        <a href="#" onclick="deleteBand(${band.id})" class="text-danger">Delete</a>
                     </td>
                 `;
             });
@@ -514,9 +526,10 @@ function loadBands() {
                             <td>${studio.id}</td>
                             <td>${studio.name}</td>
                             <td>
-                                <button onclick="openEditStudioModal(${studio.id})">Edit</button>
-                                <button onclick="deleteStudio(${studio.id})" class="btn-danger">Delete</button>
-                            </td>
+    <a href="#" onclick="openEditStudioModal(${studio.id})">Edit</a>
+    |
+    <a href="#" onclick="deleteStudio(${studio.id})" class="text-danger">Delete</a>
+</td>
                         `;
                     });
                 }

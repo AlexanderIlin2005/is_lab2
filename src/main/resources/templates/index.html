@@ -38,6 +38,7 @@
         .btn-success { background-color: #28a745; }
         .btn-success:hover { background-color: #218838; }
 
+
         .results-container { margin-top: 15px; padding: 15px; border-radius: 5px; text-align: left; }
         .success-message { background-color: #d4edda; color: #155724; padding: 10px; border-radius: 4px; border: 1px solid #c3e6cb; }
         .error-message { background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; border: 1px solid #f5c6cb; }
@@ -76,7 +77,7 @@
                 <select id="sortField">
                     <option value="id">Sort by ID</option>
                     <option value="name">Sort by Name</option>
-                    <option value="creationDate">Sort by Creation Date</option>
+                    <option value="establishmentDate">Sort by Establishment Date</option>
                 </select>
                 <select id="sortOrder">
                     <option value="asc">Ascending</option>
@@ -225,7 +226,7 @@
             <label>Singles Count: <input type="number" id="singleCount" min="1"></label>
             <label>Description: <textarea id="description"></textarea></label>
             <label>Album Count: <input type="number" id="albumCount" min="1" required></label>
-            <label>Establishment Date: <input type="datetime-local" id="establishmentDate" required></label>
+            <label>Establishment Date: <input type="datetime-local" id="establishmentDate" required></label>-->
             <hr>
             <h4>Coordinates</h4>
             <label>X: <input type="number" step="any" id="coordinatesX" max="931" required></label>
@@ -254,6 +255,16 @@
             <label>Studio Name: <input type="text" id="studioName" required></label>
             <button type="submit" id="studioSubmitButton">Create</button>
         </form>
+    </div>
+</div>
+
+<div id="bandDetailsModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <span class="close" onclick="document.getElementById('bandDetailsModal').style.display='none'">&times;</span>
+        <h2 id="bandDetailsModalTitle">Band Details</h2>
+        <div id="bandDetailsModalBody" style="text-align: left;">
+        </div>
+        <button onclick="document.getElementById('bandDetailsModal').style.display='none'" style="margin-top: 20px;">Close</button>
     </div>
 </div>
 
@@ -451,7 +462,10 @@ function loadBands() {
                 const row = tableBody.insertRow();
                 row.innerHTML = `
                     <td>${band.id}</td>
-                    <td>${band.name}</td>
+                    <td>
+                        <span style="cursor: pointer; color: #007BFF; text-decoration: underline;"
+                              onclick="showBandDetails(${band.id})">${band.name}</span>
+                    </td>
                     <td>${band.genre}</td>
                     <td>${band.numberOfParticipants}</td>
                     <td>${band.albumCount}</td>
@@ -918,6 +932,72 @@ function loadBands() {
             })
             .catch(err => showError('Error: Could not find or update band with ID ' + bandId));
     }
+
+    function showBandDetails(id) {
+    fetch(`${API_URL}/${id}`)
+        .then(res => {
+            if (!res.ok) throw new Error('Band not found or network error');
+            return res.json();
+        })
+        .then(band => {
+            // Форматирование даты
+            const creationDate = new Date(band.creationDate).toLocaleString();
+            const establishmentDate = new Date(band.establishmentDate * 1000).toLocaleDateString();
+
+            // Форматирование координат
+            const coords = `(X: ${band.coordinates.x}, Y: ${band.coordinates.y})`;
+
+            // Форматирование лучшего альбома
+            const bestAlbumInfo = band.bestAlbum ?
+                `Album ID: ${band.bestAlbum.id}, Name: ${band.bestAlbum.name}, Tracks: ${band.bestAlbum.tracks}, Length: ${band.bestAlbum.length}` :
+                'No Best Album';
+
+            // Создание HTML для вывода
+            const detailsHtml = `
+                <h3>Details for ${band.name} (ID: ${band.id})</h3>
+                <p><strong>Genre:</strong> ${band.genre}</p>
+                <p><strong>Participants:</strong> ${band.numberOfParticipants}</p>
+                <p><strong>Singles Count:</strong> ${band.singleCount || 'N/A'}</p>
+                <p><strong>Album Count:</strong> ${band.albumCount}</p>
+                <p><strong>Studio:</strong> ${band.studio ? band.studio.name : 'None'}</p>
+                <p><strong>Established:</strong> ${establishmentDate}</p>
+                <p><strong>Created in System:</strong> ${creationDate}</p>
+                <p><strong>Coordinates:</strong> ${coords}</p>
+                <p><strong>Best Album:</strong> ${bestAlbumInfo}</p>
+                <p><strong>Description:</strong> ${band.description || 'No description provided'}</p>
+            `;
+
+            // Предполагая, что у вас есть функция showModal(html, title)
+            // Если нет, используйте простой alert или showInfo:
+
+            // Используем showInfo (если она поддерживает HTML)
+            // Если showInfo не поддерживает HTML, используйте alert или создайте modal.
+            showModal(detailsHtml, `Band Details: ${band.name}`);
+
+        })
+        .catch(error => showError('Error loading band details: ' + error.message));
+}
+
+    // --- Вспомогательная функция showModal (если она нужна) ---
+// Если у вас нет универсального модального окна, можете создать его или использовать alert
+function showModal(content, title = 'Information') {
+    // Временно используем alert для простоты:
+    // alert(title + "\n\n" + content.replace(/<[^>]*>?/gm, '\n').replace(/&nbsp;/g, ' '));
+
+    // В идеале: открывается новое модальное окно с этим контентом.
+
+    // Если у вас есть элемент с id="infoModalBody" и id="infoModalTitle"
+    const modal = document.getElementById('bandDetailsModal');
+    if (modal) {
+        document.getElementById('bandDetailsModalTitle').textContent = title;
+        document.getElementById('bandDetailsModalBody').innerHTML = content;
+        modal.style.display = 'block';
+    } else {
+        // Fallback:
+        console.warn("Using alert fallback. Implement a proper 'bandDetailsModal' in HTML.");
+        alert(title + "\n\n" + content.replace(/<[^>]*>?/gm, ' ').replace(/&nbsp;/g, ' '));
+    }
+}
 
 </script>
 </body>

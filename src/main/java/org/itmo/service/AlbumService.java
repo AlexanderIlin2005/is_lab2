@@ -22,7 +22,7 @@ public class AlbumService {
     }
 
     private void notifyClients() {
-        // Уведомляем клиентов о любом изменении, так как альбомы могут быть bestAlbum
+
         messagingTemplate.convertAndSend("/topic/bands/updates", "ALBUM_UPDATED");
     }
 
@@ -44,13 +44,13 @@ public class AlbumService {
     public Album update(Long id, Album patch) {
         Album existing = getById(id);
 
-        // Обновляем только разрешенные поля (name, tracks, length)
+
         if (patch.getName() != null) existing.setName(patch.getName());
         if (patch.getTracks() > 0) existing.setTracks(patch.getTracks());
         if (patch.getLength() > 0) existing.setLength(patch.getLength());
 
         if (patch.getSales() != null) {
-            // Проверка на null обязательна, так как Double может быть null
+
             existing.setSales(patch.getSales());
         }
 
@@ -60,8 +60,7 @@ public class AlbumService {
     }
 
     public void delete(Long id) {
-        // NOTE: Если Album связан с MusicBand (bestAlbum), может потребоваться
-        // сначала обнулить ссылку в MusicBand, чтобы избежать ошибки FK.
+
         albumRepository.deleteById(id);
         notifyClients();
     }

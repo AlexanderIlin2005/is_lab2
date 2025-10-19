@@ -328,7 +328,7 @@
         const resultsDiv = document.getElementById('results');
 
         const ALBUM_API_URL = '/api/albums';
-        let albums = []; // Хранилище для данных альбомов
+        let albums = [];
 
         function connectToWebSocket() {
 
@@ -457,11 +457,11 @@
                     const option = document.createElement('option');
 
                     if (select.id === 'studioId') {
-                        // 🚀 РЕШАЮЩИЙ ФИКС: Для редактирования группы используем ID как value!
+
                         option.value = studio.id;
-                        option.textContent = studio.name; // Отображаем только имя
+                        option.textContent = studio.name;
                     } else {
-                        // Для других операций (удаление, подсчет) используем ИМЯ
+
                         option.value = studio.name;
                         option.textContent = `${studio.name} (ID: ${studio.id})`;
                     }
@@ -1024,27 +1024,23 @@
             document.getElementById('bandDetailsModalBody').innerHTML = content;
             modal.style.display = 'block';
         } else {
-            // Fallback:
+
             console.warn("Using alert fallback. Implement a proper 'bandDetailsModal' in HTML.");
             alert(title + "\n\n" + content.replace(/<[^>]*>?/gm, ' ').replace(/&nbsp;/g, ' '));
         }
     }
 
 
-// =================================================================
-// 🚀 ALBUM MANAGEMENT JAVASCRIPT
-// =================================================================
 
-const ALBUM_API_URL = '/api/albums';
-let albums = []; // Global array to store album data
 
-// --- Load All Albums and Populate Table ---
+
+
 function loadAlbums() {
     fetch(ALBUM_API_URL)
         .then(response => response.json())
         .then(data => {
             const tableBody = document.querySelector('#albumsTable tbody');
-            if (!tableBody) return; // Guard against missing table
+            if (!tableBody) return;
             tableBody.innerHTML = '';
 
             albums = Array.isArray(data) ? data : [];
@@ -1063,7 +1059,7 @@ function loadAlbums() {
                     </td>
                 `;
             });
-            updateAlbumSelects(); // Update the dropdown in the Band form
+            updateAlbumSelects();
         })
         .catch(error => {
             console.error('Error loading albums:', error);
@@ -1071,7 +1067,7 @@ function loadAlbums() {
         });
 }
 
-// --- Modal Window Controls ---
+
 function openCreateAlbumModal() {
     document.getElementById('albumForm').reset();
     clearFormErrors();
@@ -1102,9 +1098,9 @@ function openEditAlbumModal(id) {
         .catch(error => showError('Error loading album: ' + error.message));
 }
 
-// --- Form Submission Handler (Create/Update) ---
+
 function handleAlbumFormSubmit(event) {
-    event.preventDefault(); // This is crucial to prevent page reload
+    event.preventDefault();
 
     const albumId = document.getElementById('albumModalId').value;
     const method = albumId ? 'PATCH' : 'POST';
@@ -1132,12 +1128,12 @@ function handleAlbumFormSubmit(event) {
     .then(() => {
         showSuccess(`Album ${albumId ? 'updated' : 'created'} successfully!`);
         closeAlbumModal();
-        loadAlbums(); // Refresh the album list
+        loadAlbums();
     })
     .catch(error => showError('Error submitting album form: ' + error.message));
 }
 
-// --- Delete Handler ---
+
 function deleteAlbum(id) {
     if (confirm(`Are you sure you want to delete album with ID ${id}? This may affect bands that use it as 'Best Album'.`)) {
         fetch(`${ALBUM_API_URL}/${id}`, { method: 'DELETE' })
@@ -1153,7 +1149,7 @@ function deleteAlbum(id) {
     }
 }
 
-// --- Dropdown Update for Band Form ---
+
 function updateAlbumSelects() {
     const bestAlbumSelect = document.getElementById('bestAlbumId');
     if (!bestAlbumSelect) return;

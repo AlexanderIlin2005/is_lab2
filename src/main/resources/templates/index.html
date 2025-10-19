@@ -257,6 +257,9 @@
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
 <script>
     let currentPage = 0;
     let totalPages = 1;
@@ -266,10 +269,38 @@
     let currentSortOrder = 'asc';
     let currentFilterName = '';
     let studios = [];
+    let stompClient = null;
 
     const API_URL = '/api/music-bands';
     const STUDIO_API_URL = '/api/studios';
     const resultsDiv = document.getElementById('results');
+
+    function connectToWebSocket() {
+    // Используем /ws, который мы определили в WebSocketConfig
+    const socket = new SockJS('/ws');
+    stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, (frame) => {
+        console.log('Connected to WebSocket: ' + frame);
+
+        // Подписываемся на тему, определенную в WebSocketConfig (/topic/bands/updates)
+        stompClient.subscribe('/topic/bands/updates', (message) => {
+            console.log("Received update notification: ", message.body);
+
+            // Получив сигнал, принудительно перезагружаем данные Band и Studio
+            // loadBands() и loadStudioSelects() - это ключевые функции, которые обновляют UI.
+            loadBands();
+            loadStudioSelects();
+
+            showInfo("Данные обновлены на другой вкладке/клиенте.");
+        });
+
+    }, (error) => {
+        console.error('WebSocket connection error. Retrying in 5 seconds...', error);
+        // Автоматическое переподключение в случае ошибки
+        setTimeout(connectToWebSocket, 5000);
+    });
+}
 
     // --- Навигация ---
     function showSection(sectionId) {
@@ -307,6 +338,7 @@
                 showSection(sectionId);
             });
         });
+        connectToWebSocket(); // <-- Добавьте этот вызов
     });
 
     // --- Утилиты для сообщений ---

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.itmo.model.Studio;
 import org.itmo.repository.StudioRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.List;
 
@@ -12,6 +13,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StudioService {
     private final StudioRepository studioRepository;
+    private final SimpMessagingTemplate messagingTemplate; // <-- Новое поле
+
+    private void notifyClients(String type) {
+        // Отправляем простое сообщение, чтобы клиенты знали, что нужно обновиться
+        messagingTemplate.convertAndSend("/topic/studios/updates", type);
+    }
 
     public List<Studio> getAll() {
         return studioRepository.findAll();
@@ -23,17 +30,20 @@ public class StudioService {
     }
 
     public Studio create(Studio studio) {
+        notifyClients("STUDIO_UPDATED");
         return studioRepository.save(studio);
     }
 
     public Studio update(Long id, Studio studio) {
         Studio existing = getById(id);
         existing.setName(studio.getName());
+        notifyClients("STUDIO_UPDATED");
         return studioRepository.save(existing);
     }
 
     public void delete(Long id) {
         Studio studio = getById(id);
         studioRepository.delete(studio);
+        notifyClients("STUDIO_UPDATED");
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -28,19 +29,28 @@ public class MusicBandService {
     private final StudioRepository studioRepository;
     //private final MusicBandEventsPublisher eventsPublisher;
     private final MusicBandMapper musicBandMapper;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public MusicBandService(MusicBandRepository musicBandRepository,
                             AlbumRepository albumRepository,
                             CoordinatesRepository coordinatesRepository,
                             StudioRepository studioRepository,
                             //MusicBandEventsPublisher eventsPublisher,
-                            MusicBandMapper musicBandMapper) {
+                            MusicBandMapper musicBandMapper,
+                            SimpMessagingTemplate messagingTemplate) {
         this.musicBandRepository = musicBandRepository;
         this.albumRepository = albumRepository;
         this.coordinatesRepository = coordinatesRepository;
         this.studioRepository = studioRepository;
         //this.eventsPublisher = eventsPublisher;
         this.musicBandMapper = musicBandMapper;
+        this.messagingTemplate = messagingTemplate;
+    }
+
+    // Новый приватный метод для отправки уведомления
+    private void notifyClients(String type) {
+        // Отправляем простое сообщение, чтобы клиенты знали, что нужно обновиться
+        messagingTemplate.convertAndSend("/topic/bands/updates", type);
     }
 
     public Page<MusicBandResponseDto> list(String nameEquals, Pageable pageable) {
@@ -96,6 +106,7 @@ public class MusicBandService {
         // Если studioId null - оставляем musicBand.studio как null
 
         musicBand = musicBandRepository.save(musicBand);
+        notifyClients("BAND_UPDATED"); // <-- Добавить вызов
         return musicBandMapper.toResponseDto(musicBand);
     }
 
@@ -160,6 +171,7 @@ public class MusicBandService {
 // и мы оставляем текущее значение существующей группы, что правильно для PATCH.
 
         existing = musicBandRepository.save(existing);
+        notifyClients("BAND_UPDATED"); // <-- Добавить вызов
         return musicBandMapper.toResponseDto(existing);
     }
 
@@ -168,6 +180,7 @@ public class MusicBandService {
                 .orElseThrow(() -> new EntityNotFoundException("MusicBand not found: " + id));
         musicBandRepository.delete(musicBand);
         //eventsPublisher.publishDeleted(id);
+        notifyClients("BAND_UPDATED"); // <-- Добавить вызов
     }
 
     // Специальные операции
@@ -204,6 +217,7 @@ public class MusicBandService {
             musicBand.setNumberOfParticipants(musicBand.getNumberOfParticipants() - 1);
             musicBandRepository.save(musicBand);
             //eventsPublisher.publishUpdated(musicBand);
+            notifyClients("BAND_UPDATED"); // <-- Добавить вызов
             return musicBand.getNumberOfParticipants();
         }
         return musicBand.getNumberOfParticipants();

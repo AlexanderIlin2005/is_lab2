@@ -3,6 +3,7 @@ package org.itmo.controller;
 import jakarta.validation.Valid;
 import org.itmo.dto.MusicBandCreateDto;
 import org.itmo.dto.MusicBandResponseDto;
+import org.itmo.model.MusicGenre;
 import org.itmo.service.MusicBandService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,10 +27,10 @@ public class MusicBandController {
 
     @GetMapping
     public Page<MusicBandResponseDto> list(@RequestParam(defaultValue = "0") int page,
-                                          @RequestParam(defaultValue = "10") int size,
-                                          @RequestParam(required = false) String sort,
-                                          @RequestParam(required = false) String order,
-                                          @RequestParam(required = false) String nameEquals) {
+                                           @RequestParam(defaultValue = "10") int size,
+                                           @RequestParam(required = false) String sort,
+                                           @RequestParam(required = false) String order,
+                                           @RequestParam(required = false) String nameEquals) {
         Sort sortSpec = Sort.unsorted();
         if (sort != null && !sort.isEmpty()) {
             Sort.Direction dir = (order != null && order.equalsIgnoreCase("desc")) ? Sort.Direction.DESC : Sort.Direction.ASC;
@@ -52,7 +53,7 @@ public class MusicBandController {
 
     @PatchMapping("/{id}")
     public MusicBandResponseDto update(@PathVariable Long id,
-                                      @RequestBody MusicBandCreateDto patch) {
+                                       @Valid @RequestBody MusicBandCreateDto patch) {
         return musicBandService.update(id, patch);
     }
 
@@ -83,7 +84,7 @@ public class MusicBandController {
     }
 
     @GetMapping("/by-genre/{genre}")
-    public List<MusicBandResponseDto> findByGenre(@PathVariable String genre) {
+    public List<MusicBandResponseDto> findByGenre(@PathVariable MusicGenre genre) {
         return musicBandService.findByGenre(genre);
     }
 

@@ -5,10 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.itmo.dto.*;
 import org.itmo.mapper.MusicBandMapper;
-import org.itmo.model.MusicBand;
-import org.itmo.model.Album;
-import org.itmo.model.Coordinates;
-import org.itmo.model.Studio;
+import org.itmo.model.*;
 import org.itmo.repository.MusicBandRepository;
 import org.itmo.repository.AlbumRepository;
 import org.itmo.repository.CoordinatesRepository;
@@ -33,11 +30,11 @@ public class MusicBandService {
     private final MusicBandMapper musicBandMapper;
 
     public MusicBandService(MusicBandRepository musicBandRepository,
-                           AlbumRepository albumRepository,
-                           CoordinatesRepository coordinatesRepository,
-                           StudioRepository studioRepository,
-                           //MusicBandEventsPublisher eventsPublisher,
-                           MusicBandMapper musicBandMapper) {
+                            AlbumRepository albumRepository,
+                            CoordinatesRepository coordinatesRepository,
+                            StudioRepository studioRepository,
+                            //MusicBandEventsPublisher eventsPublisher,
+                            MusicBandMapper musicBandMapper) {
         this.musicBandRepository = musicBandRepository;
         this.albumRepository = albumRepository;
         this.coordinatesRepository = coordinatesRepository;
@@ -89,20 +86,16 @@ public class MusicBandService {
             musicBand.setBestAlbum(newAlbum);
         }
 
-        // studio: if id provided -> load, else create (nullable)
+        // ИСПРАВЛЕННАЯ ЛОГИКА ДЛЯ СТУДИИ: только существующие студии по ID
         Long studioId = dto.getStudio() != null ? dto.getStudio().getId() : null;
         if (studioId != null) {
             Studio persistentStudio = studioRepository.findById(studioId)
                     .orElseThrow(() -> new EntityNotFoundException("Studio not found: " + studioId));
             musicBand.setStudio(persistentStudio);
-        } else if (dto.getStudio() != null) {
-            Studio newStudio = musicBandMapper.toEntity(dto.getStudio());
-            newStudio = studioRepository.save(newStudio);
-            musicBand.setStudio(newStudio);
         }
+        // Если studioId null - оставляем musicBand.studio как null
 
         musicBand = musicBandRepository.save(musicBand);
-        //eventsPublisher.publishCreated(musicBand);
         return musicBandMapper.toResponseDto(musicBand);
     }
 
@@ -147,22 +140,26 @@ public class MusicBandService {
             }
         }
 
-        // Обновляем студию
+        /// Обновляем студию (заменяем ваш старый блок, который начинался с Long studioId = ...)
+
+// 1. Сначала проверяем, есть ли вообще информация о студии в патче
         if (patch.getStudio() != null) {
             Long studioId = patch.getStudio().getId();
+
             if (studioId != null) {
+                // 2. Если передан ID, ищем и устанавливаем Studio
                 Studio persistentStudio = studioRepository.findById(studioId)
                         .orElseThrow(() -> new EntityNotFoundException("Studio not found: " + studioId));
                 existing.setStudio(persistentStudio);
             } else {
-                Studio newStudio = musicBandMapper.toEntity(patch.getStudio());
-                newStudio = studioRepository.save(newStudio);
-                existing.setStudio(newStudio);
+                // 3. Если patch.getStudio() НЕ NULL, но ID НУЛЛ (т.е. сброс поля)
+                existing.setStudio(null);
             }
         }
+// Если patch.getStudio() == null, это означает, что поле не было в теле PATCH запроса,
+// и мы оставляем текущее значение существующей группы, что правильно для PATCH.
 
         existing = musicBandRepository.save(existing);
-        //eventsPublisher.publishUpdated(existing);
         return musicBandMapper.toResponseDto(existing);
     }
 
@@ -192,7 +189,7 @@ public class MusicBandService {
         return musicBandRepository.countByStudioNameGreaterThan(studioName);
     }
 
-    public List<MusicBandResponseDto> findByGenre(String genre) {
+    public List<MusicBandResponseDto> findByGenre(MusicGenre genre) {
         List<MusicBand> musicBands = musicBandRepository.findByGenre(genre);
         return musicBands.stream()
                 .map(musicBandMapper::toResponseDto)

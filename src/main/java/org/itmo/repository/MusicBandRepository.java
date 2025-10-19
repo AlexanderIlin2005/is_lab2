@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface MusicBandRepository extends JpaRepository<MusicBand, Long> {
     Page<MusicBand> findByName(String name, Pageable pageable);
 
-    // Исправьте этот метод - он должен принимать MusicGenre, а не String
+
     Page<MusicBand> findByGenre(MusicGenre genre, Pageable pageable);
 
     long deleteByStudioName(String studioName);
@@ -27,7 +27,7 @@ public interface MusicBandRepository extends JpaRepository<MusicBand, Long> {
     @Query("SELECT COUNT(m) FROM MusicBand m WHERE m.studio.name > :studioName")
     long countByStudioNameGreaterThan(@Param("studioName") String studioName);
 
-    // Исправьте этот метод - он должен принимать MusicGenre
+
     @Query("SELECT m FROM MusicBand m WHERE m.genre = :genre")
     List<MusicBand> findByGenre(@Param("genre") MusicGenre genre);
 }

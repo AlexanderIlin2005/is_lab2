@@ -68,19 +68,18 @@
 <body>
 
 <div class="container">
-    <!-- Навигационное меню -->
+
     <nav class="main-nav">
         <ul>
             <li><a href="#bands-section" class="nav-link active">Music Bands</a></li>
             <li><a href="#studios-section" class="nav-link">Studios</a></li>
             <li><a href="#operations-section" class="nav-link">Special Operations</a></li>
-            <li><a href="#about-section" class="nav-link">About</a></li>
         </ul>
     </nav>
 
     <h1>MusicBand Information System</h1>
 
-    <!-- Секция Music Bands -->
+
     <div id="bands-section" class="section active">
         <div class="controls">
             <div class="form-group">
@@ -122,7 +121,7 @@
         </div>
     </div>
 
-    <!-- Секция Studios -->
+
     <div id="studios-section" class="section">
         <h2>Studio Management</h2>
 
@@ -152,7 +151,7 @@
         </div>
     </div>
 
-    <!-- Секция Special Operations -->
+
     <div id="operations-section" class="section">
         <h2>Special Operations</h2>
         <div id="results" class="results-container">Operation results will be shown here.</div>
@@ -200,23 +199,9 @@
         </div>
     </div>
 
-    <!-- Секция About -->
-    <div id="about-section" class="section">
-        <h2>About</h2>
-        <p><strong>MusicBand Information System v1.0</strong></p>
-        <p>Manage your music bands collection with ease. This system allows you to:</p>
-        <ul>
-            <li>Create, read, update, and delete music bands</li>
-            <li>Manage recording studios</li>
-            <li>Filter and sort bands by various criteria</li>
-            <li>Perform special operations like genre-based searches</li>
-            <li>Manage band participants and album information</li>
-        </ul>
-        <p>Built with Spring Boot, JPA, and modern web technologies.</p>
-    </div>
-</div>
 
-<!-- Модальное окно для Band -->
+
+
 <div id="bandModal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeModal()">&times;</span>
@@ -256,7 +241,7 @@
     </div>
 </div>
 
-<!-- Модальное окно для Studio -->
+
 <div id="studioModal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeStudioModal()">&times;</span>
@@ -298,19 +283,18 @@
     const resultsDiv = document.getElementById('results');
 
     function connectToWebSocket() {
-    // Используем /ws, который мы определили в WebSocketConfig
+
     const socket = new SockJS('/ws');
     stompClient = Stomp.over(socket);
 
     stompClient.connect({}, (frame) => {
         console.log('Connected to WebSocket: ' + frame);
 
-        // Подписываемся на тему, определенную в WebSocketConfig (/topic/bands/updates)
+
         stompClient.subscribe('/topic/bands/updates', (message) => {
             console.log("Received update notification: ", message.body);
 
-            // Получив сигнал, принудительно перезагружаем данные Band и Studio
-            // loadBands() и loadStudioSelects() - это ключевые функции, которые обновляют UI.
+
             loadBands();
             loadStudioSelects();
 
@@ -319,12 +303,12 @@
 
     }, (error) => {
         console.error('WebSocket connection error. Retrying in 5 seconds...', error);
-        // Автоматическое переподключение в случае ошибки
+
         setTimeout(connectToWebSocket, 5000);
     });
 }
 
-    // --- Навигация ---
+
     function showSection(sectionId) {
         document.querySelectorAll('.section').forEach(section => {
             section.classList.remove('active');
@@ -337,17 +321,17 @@
         });
         document.querySelector(`[href="#${sectionId}"]`).classList.add('active');
 
-        // При переходе в секцию студий загружаем их список
+
         if (sectionId === 'studios-section') {
             loadStudios();
         }
-        // При переходе в спецоперации обновляем списки студий
+
         if (sectionId === 'operations-section') {
             loadStudioSelects();
         }
     }
 
-    // Инициализация навигации
+
     document.addEventListener('DOMContentLoaded', () => {
         loadBands();
         loadStudios();
@@ -360,10 +344,10 @@
                 showSection(sectionId);
             });
         });
-        connectToWebSocket(); // <-- Добавьте этот вызов
+        connectToWebSocket();
     });
 
-    // --- Утилиты для сообщений ---
+
     function showError(message) {
         resultsDiv.innerHTML = `<div class="error-message">❌ ${message}</div>`;
         resultsDiv.scrollIntoView({ behavior: 'smooth' });
@@ -379,7 +363,7 @@
         resultsDiv.scrollIntoView({ behavior: 'smooth' });
     }
 
-    // --- Загрузка студий для селектов ---
+
     function loadStudioSelects() {
         fetch(STUDIO_API_URL)
             .then(response => response.json())
@@ -399,18 +383,18 @@
 
     studioSelects.forEach(select => {
         if (select) {
-            // Сохраняем текущее значение
+
             const currentValue = select.value;
 
-            // Определяем, сколько опций оставить. Для studioId оставляем 1 (No Studio), для остальных 0.
+
             const initialLength = select.id === 'studioId' ? 1 : 0;
 
-            // Очищаем опции
+
             while (select.options.length > initialLength) {
                 select.remove(select.options.length - 1);
             }
 
-            // Если это селект для группы, убедимся, что опция "No Studio" существует
+
             if (select.id === 'studioId' && select.options.length === 0) {
                  const noneOption = document.createElement('option');
                  noneOption.value = "";
@@ -418,7 +402,7 @@
                  select.appendChild(noneOption);
             }
 
-            // Добавляем студии
+
             studios.forEach(studio => {
                 const option = document.createElement('option');
 
@@ -434,7 +418,7 @@
 
                 select.appendChild(option);
             });
-            // Восстанавливаем значение если возможно
+
             if (currentValue && Array.from(select.options).some(opt => opt.value == currentValue)) {
                 select.value = currentValue;
             }
@@ -442,7 +426,7 @@
     });
 }
 
-    // --- Основная логика для Bands ---
+
     function buildApiUrl() {
         return `${API_URL}?page=${currentPage}&size=10&sort=${currentSortField}&order=${currentSortOrder}&nameEquals=${encodeURIComponent(currentFilterName)}`;
     }
@@ -457,10 +441,10 @@ function loadBands() {
 
             bands.forEach(band => {
 
-                // --- ИСПРАВЛЕНИЕ: ПРЕОБРАЗОВАНИЕ UNIX TIME В ЧИТАЕМУЮ ДАТУ ---
+
                 const establishmentTimestamp = band.establishmentDate;
 
-                // Проверяем, что это числовое значение, и переводим в миллисекунды (умножаем на 1000)
+
                 const dateToDisplay = (typeof establishmentTimestamp === 'number')
                     ? new Date(establishmentTimestamp * 1000).toLocaleDateString('ru-RU', {
                         year: 'numeric',
@@ -468,7 +452,7 @@ function loadBands() {
                         day: '2-digit'
                     })
                     : 'N/A';
-                // -------------------------------------------------------------
+
 
                 const row = tableBody.insertRow();
                 row.innerHTML = `
@@ -504,7 +488,7 @@ function loadBands() {
         });
 }
 
-    // --- Логика для Studios ---
+
     function loadStudios() {
         const filter = document.getElementById('studioFilter')?.value || '';
         let url = STUDIO_API_URL;
@@ -518,7 +502,7 @@ function loadBands() {
                 const tableBody = document.querySelector('#studiosTable tbody');
                 tableBody.innerHTML = '';
 
-                // Если data - массив
+
                 if (Array.isArray(data)) {
                     data.forEach(studio => {
                         const row = tableBody.insertRow();
@@ -526,15 +510,15 @@ function loadBands() {
                             <td>${studio.id}</td>
                             <td>${studio.name}</td>
                             <td>
-    <a href="#" onclick="openEditStudioModal(${studio.id})">Edit</a>
-    |
-    <a href="#" onclick="deleteStudio(${studio.id})" class="text-danger">Delete</a>
-</td>
+                                <a href="#" onclick="openEditStudioModal(${studio.id})">Edit</a>
+                                |
+                                <a href="#" onclick="deleteStudio(${studio.id})" class="text-danger">Delete</a>
+                            </td>
                         `;
                     });
                 }
 
-                // Обновляем селекты
+
                 studios = Array.isArray(data) ? data : [];
                 updateStudioSelects();
             })
@@ -621,9 +605,6 @@ function loadBands() {
         }
     }
 
-    // --- Остальные функции (applyFiltersAndSort, changePage, deleteBand, модальные окна для band и т.д.) ---
-    // ... остальной JavaScript код остается таким же, как в предыдущей версии ...
-    // Только нужно добавить вызов loadStudioSelects() в openCreateModal() и openEditModal()
 
     function applyFiltersAndSort() {
         currentFilterName = document.getElementById('filterName').value;
@@ -658,7 +639,7 @@ function loadBands() {
         }
     }
 
-    // --- Логика модального окна для Band ---
+
     const modal = document.getElementById('bandModal');
     const studioModal = document.getElementById('studioModal');
 
@@ -669,7 +650,7 @@ function loadBands() {
     document.getElementById('modalTitle').textContent = 'Create New Band';
     document.getElementById('submitButton').textContent = 'Create';
 
-    // Сбрасываем селект студии
+
     const studioSelect = document.getElementById('studioId');
     if (studioSelect) {
         studioSelect.value = '';
@@ -690,7 +671,7 @@ function loadBands() {
             document.getElementById('description').value = band.description;
             document.getElementById('albumCount').value = band.albumCount;
 
-            // Преобразование даты
+
             const dt = new Date(band.establishmentDate);
             document.getElementById('establishmentDate').value = new Date(dt.getTime() - (dt.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
 
@@ -698,8 +679,8 @@ function loadBands() {
             document.getElementById('coordinatesY').value = band.coordinates.y;
             document.getElementById('bestAlbumId').value = band.bestAlbum ? band.bestAlbum.id : '';
 
-            // 2. STUDIO: КРИТИЧЕСКИЙ ШАГ
-        // Устанавливаем либо ID, либо пустую строку, что соответствует опции "No Studio"
+
+
             const studioId = band.studio ? band.studio.id : '';
             document.getElementById('studioId').value = studioId;
 
@@ -768,24 +749,21 @@ function loadBands() {
     const method = bandId ? 'PATCH' : 'POST';
     const url = bandId ? `${API_URL}/${bandId}` : API_URL;
 
-    // Establishment Date (предполагая, что openEditModal корректно устанавливает value)
+
     const establishmentDate = new Date(document.getElementById('establishmentDate').value).toISOString();
 
     const studioId = document.getElementById('studioId').value;
 
-    // --- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ДЛЯ STUDIO ---
-    // Создаем полезную нагрузку (payload) для Studio, чтобы сработал сброс на бэкенде.
+
     let studioPayload = null;
     if (studioId !== "") {
-        // 1. Если выбран ID, отправляем { id: 123 }
+
         studioPayload = { id: parseInt(studioId) };
     } else {
-        // 2. Если выбрано "No Studio" (значение ""), отправляем { id: null }.
-        // Это гарантирует, что на бэкенде сработает логика if (patch.getStudio() != null)
-        // и произойдет сброс existing.setStudio(null).
+
         studioPayload = { id: null };
     }
-    // ----------------------------------------
+
 
     const formData = {
         name: document.getElementById('name').value,
@@ -801,7 +779,7 @@ function loadBands() {
         },
         bestAlbum: document.getElementById('bestAlbumId').value ? { id: parseInt(document.getElementById('bestAlbumId').value) } : null,
 
-        // Используем исправленную нагрузку для Studio
+
         studio: studioPayload,
     };
 
@@ -846,7 +824,7 @@ function loadBands() {
     });
 }
 
-    // --- Логика специальных операций ---
+
     function handleDeleteByStudio(event) {
         event.preventDefault();
         const studioName = document.getElementById('studioNameToDelete').value;
@@ -953,19 +931,19 @@ function loadBands() {
             return res.json();
         })
         .then(band => {
-            // Форматирование даты
+
             const creationDate = new Date(band.creationDate).toLocaleString();
             const establishmentDate = new Date(band.establishmentDate * 1000).toLocaleDateString();
 
-            // Форматирование координат
+
             const coords = `(X: ${band.coordinates.x}, Y: ${band.coordinates.y})`;
 
-            // Форматирование лучшего альбома
+
             const bestAlbumInfo = band.bestAlbum ?
                 `Album ID: ${band.bestAlbum.id}, Name: ${band.bestAlbum.name}, Tracks: ${band.bestAlbum.tracks}, Length: ${band.bestAlbum.length}` :
                 'No Best Album';
 
-            // Создание HTML для вывода
+
             const detailsHtml = `
                 <h3>Details for ${band.name} (ID: ${band.id})</h3>
                 <p><strong>Genre:</strong> ${band.genre}</p>
@@ -980,26 +958,16 @@ function loadBands() {
                 <p><strong>Description:</strong> ${band.description || 'No description provided'}</p>
             `;
 
-            // Предполагая, что у вас есть функция showModal(html, title)
-            // Если нет, используйте простой alert или showInfo:
 
-            // Используем showInfo (если она поддерживает HTML)
-            // Если showInfo не поддерживает HTML, используйте alert или создайте modal.
             showModal(detailsHtml, `Band Details: ${band.name}`);
 
         })
         .catch(error => showError('Error loading band details: ' + error.message));
 }
 
-    // --- Вспомогательная функция showModal (если она нужна) ---
-// Если у вас нет универсального модального окна, можете создать его или использовать alert
+
 function showModal(content, title = 'Information') {
-    // Временно используем alert для простоты:
-    // alert(title + "\n\n" + content.replace(/<[^>]*>?/gm, '\n').replace(/&nbsp;/g, ' '));
 
-    // В идеале: открывается новое модальное окно с этим контентом.
-
-    // Если у вас есть элемент с id="infoModalBody" и id="infoModalTitle"
     const modal = document.getElementById('bandDetailsModal');
     if (modal) {
         document.getElementById('bandDetailsModalTitle').textContent = title;

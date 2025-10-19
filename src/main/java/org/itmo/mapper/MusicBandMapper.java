@@ -6,13 +6,13 @@ import org.mapstruct.*;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface MusicBandMapper {
-    // Entity -> Response DTO
+
     MusicBandResponseDto toResponseDto(MusicBand musicBand);
     CoordinatesResponseDto toResponseDto(Coordinates coordinates);
     AlbumResponseDto toResponseDto(Album album);
     StudioResponseDto toResponseDto(Studio studio);
 
-    // Create DTO -> Entity (без связей, связи проставляем в сервисе)
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "coordinates", ignore = true)
     @Mapping(target = "bestAlbum", ignore = true)

@@ -20,14 +20,14 @@ public class Main {
             throw new IllegalStateException("Нет свободных портов в диапазоне " + START_PORT + "-" + END_PORT);
         }
 
-        System.out.println("Запускаю сервер на порту: " + port);
+        System.out.println("Starting server on port: " + port);
 
         Server server = new Server(port);
         ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
         server.setHandler(context);
 
-        // Подключаем Spring DispatcherServlet
+
         AnnotationConfigWebApplicationContext ctx = new AnnotationConfigWebApplicationContext();
         ctx.register(WebConfig.class);
 
@@ -44,9 +44,9 @@ public class Main {
                 socket.setReuseAddress(true);
                 return port;
             } catch (IOException ignored) {
-                // порт занят, идём дальше
+
             }
         }
-        return -1; // не найдено
+        return -1;
     }
 }

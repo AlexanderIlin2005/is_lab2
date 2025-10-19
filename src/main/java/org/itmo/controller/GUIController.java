@@ -8,8 +8,8 @@ public class GUIController {
 
     @GetMapping("/")
     public String home() {
-        return "index"; // This serves your main page.
+        return "index";
     }
 
-    // The @GetMapping("/create") method is no longer needed and can be removed.
+
 }

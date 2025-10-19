@@ -63,7 +63,7 @@ public class MusicBandController {
         return ResponseEntity.noContent().build();
     }
 
-    // Спец-операции
+
     @DeleteMapping("/by-studio")
     public Map<String, Object> deleteOneByStudio(@RequestParam String studioName) {
         boolean deleted = musicBandService.deleteOneByStudioName(studioName);

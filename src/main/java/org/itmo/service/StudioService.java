@@ -16,7 +16,7 @@ public class StudioService {
     private final SimpMessagingTemplate messagingTemplate; // <-- Новое поле
 
     private void notifyClients(String type) {
-        // Отправляем простое сообщение, чтобы клиенты знали, что нужно обновиться
+
         messagingTemplate.convertAndSend("/topic/studios/updates", type);
     }
 

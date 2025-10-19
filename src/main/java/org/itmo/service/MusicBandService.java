@@ -35,7 +35,6 @@ public class MusicBandService {
                             AlbumRepository albumRepository,
                             CoordinatesRepository coordinatesRepository,
                             StudioRepository studioRepository,
-                            //MusicBandEventsPublisher eventsPublisher,
                             MusicBandMapper musicBandMapper,
                             SimpMessagingTemplate messagingTemplate) {
         this.musicBandRepository = musicBandRepository;
@@ -47,9 +46,9 @@ public class MusicBandService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    // Новый приватный метод для отправки уведомления
+
     private void notifyClients(String type) {
-        // Отправляем простое сообщение, чтобы клиенты знали, что нужно обновиться
+
         messagingTemplate.convertAndSend("/topic/bands/updates", type);
     }
 
@@ -70,7 +69,7 @@ public class MusicBandService {
     public MusicBandResponseDto create(@Valid MusicBandCreateDto dto) {
         MusicBand musicBand = musicBandMapper.toEntity(dto);
 
-        // coordinates: if id provided -> load, else create
+
         Long coordsId = dto.getCoordinates() != null ? dto.getCoordinates().getId() : null;
         if (coordsId != null) {
             Coordinates persistentCoords = coordinatesRepository.findById(coordsId)
@@ -84,7 +83,7 @@ public class MusicBandService {
             throw new IllegalArgumentException("coordinates are required");
         }
 
-        // bestAlbum: if id provided -> load, else create (nullable)
+
         Long albumId = dto.getBestAlbum() != null ? dto.getBestAlbum().getId() : null;
         if (albumId != null) {
             Album persistentAlbum = albumRepository.findById(albumId)
@@ -96,14 +95,14 @@ public class MusicBandService {
             musicBand.setBestAlbum(newAlbum);
         }
 
-        // ИСПРАВЛЕННАЯ ЛОГИКА ДЛЯ СТУДИИ: только существующие студии по ID
+
         Long studioId = dto.getStudio() != null ? dto.getStudio().getId() : null;
         if (studioId != null) {
             Studio persistentStudio = studioRepository.findById(studioId)
                     .orElseThrow(() -> new EntityNotFoundException("Studio not found: " + studioId));
             musicBand.setStudio(persistentStudio);
         }
-        // Если studioId null - оставляем musicBand.studio как null
+
 
         musicBand = musicBandRepository.save(musicBand);
         notifyClients("BAND_UPDATED"); // <-- Добавить вызов
@@ -114,7 +113,7 @@ public class MusicBandService {
         MusicBand existing = musicBandRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("MusicBand not found: " + id));
 
-        // Обновляем поля
+
         if (patch.getName() != null) existing.setName(patch.getName());
         if (patch.getGenre() != null) existing.setGenre(patch.getGenre());
         if (patch.getNumberOfParticipants() > 0) existing.setNumberOfParticipants(patch.getNumberOfParticipants());
@@ -123,7 +122,7 @@ public class MusicBandService {
         if (patch.getAlbumCount() > 0) existing.setAlbumCount(patch.getAlbumCount());
         if (patch.getEstablishmentDate() != null) existing.setEstablishmentDate(patch.getEstablishmentDate());
 
-        // Обновляем координаты
+
         if (patch.getCoordinates() != null) {
             Long coordsId = patch.getCoordinates().getId();
             if (coordsId != null) {
@@ -137,7 +136,7 @@ public class MusicBandService {
             }
         }
 
-        // Обновляем лучший альбом
+
         if (patch.getBestAlbum() != null) {
             Long albumId = patch.getBestAlbum().getId();
             if (albumId != null) {
@@ -151,27 +150,24 @@ public class MusicBandService {
             }
         }
 
-        /// Обновляем студию (заменяем ваш старый блок, который начинался с Long studioId = ...)
 
-// 1. Сначала проверяем, есть ли вообще информация о студии в патче
         if (patch.getStudio() != null) {
             Long studioId = patch.getStudio().getId();
 
             if (studioId != null) {
-                // 2. Если передан ID, ищем и устанавливаем Studio
+
                 Studio persistentStudio = studioRepository.findById(studioId)
                         .orElseThrow(() -> new EntityNotFoundException("Studio not found: " + studioId));
                 existing.setStudio(persistentStudio);
             } else {
-                // 3. Если patch.getStudio() НЕ NULL, но ID НУЛЛ (т.е. сброс поля)
+
                 existing.setStudio(null);
             }
         }
-// Если patch.getStudio() == null, это означает, что поле не было в теле PATCH запроса,
-// и мы оставляем текущее значение существующей группы, что правильно для PATCH.
+
 
         existing = musicBandRepository.save(existing);
-        notifyClients("BAND_UPDATED"); // <-- Добавить вызов
+        notifyClients("BAND_UPDATED");
         return musicBandMapper.toResponseDto(existing);
     }
 
@@ -179,8 +175,8 @@ public class MusicBandService {
         MusicBand musicBand = musicBandRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("MusicBand not found: " + id));
         musicBandRepository.delete(musicBand);
-        //eventsPublisher.publishDeleted(id);
-        notifyClients("BAND_UPDATED"); // <-- Добавить вызов
+
+        notifyClients("BAND_UPDATED");
     }
 
     // Специальные операции
@@ -188,7 +184,7 @@ public class MusicBandService {
         Optional<MusicBand> musicBand = musicBandRepository.findFirstByStudioName(studioName);
         if (musicBand.isPresent()) {
             musicBandRepository.delete(musicBand.get());
-            //eventsPublisher.publishDeleted(musicBand.get().getId());
+
             return true;
         }
         return false;
@@ -216,8 +212,8 @@ public class MusicBandService {
         if (musicBand.getNumberOfParticipants() > 1) {
             musicBand.setNumberOfParticipants(musicBand.getNumberOfParticipants() - 1);
             musicBandRepository.save(musicBand);
-            //eventsPublisher.publishUpdated(musicBand);
-            notifyClients("BAND_UPDATED"); // <-- Добавить вызов
+
+            notifyClients("BAND_UPDATED");
             return musicBand.getNumberOfParticipants();
         }
         return musicBand.getNumberOfParticipants();

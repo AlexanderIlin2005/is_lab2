@@ -6,7 +6,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate; // Для Real-
 
 import jakarta.persistence.EntityNotFoundException;
 import org.itmo.model.Album;
-import org.itmo.repository.AlbumRepository; // Убедитесь, что этот репозиторий существует
+import org.itmo.repository.AlbumRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -14,7 +16,7 @@ import java.util.List;
 @Transactional
 public class AlbumService {
     private final AlbumRepository albumRepository;
-    private final SimpMessagingTemplate messagingTemplate; // Для Real-Time
+    private final SimpMessagingTemplate messagingTemplate;
 
     public AlbumService(AlbumRepository albumRepository, SimpMessagingTemplate messagingTemplate) {
         this.albumRepository = albumRepository;
@@ -26,8 +28,8 @@ public class AlbumService {
         messagingTemplate.convertAndSend("/topic/bands/updates", "ALBUM_UPDATED");
     }
 
-    public List<Album> getAll() {
-        return albumRepository.findAll();
+    public Page<Album> getAll(Pageable pageable) {
+        return albumRepository.findAll(pageable);
     }
 
     public Album getById(Long id) {

@@ -174,6 +174,12 @@
             <tbody>
             </tbody>
         </table>
+
+        <div class="pagination">
+            <button id="prevAlbumPage" onclick="changeAlbumPage(-1)">Previous</button>
+            <span id="albumPageInfo">Page 1 of 1</span>
+            <button id="nextAlbumPage" onclick="changeAlbumPage(1)">Next</button>
+        </div>
     </div>
 
 
@@ -317,6 +323,10 @@
         let totalPages = 1;
         let currentStudioPage = 0;
         let totalStudioPages = 1;
+
+        let currentAlbumPage = 0;
+        let totalAlbumPages = 1;
+
         let currentSortField = 'id';
         let currentSortOrder = 'asc';
         let currentFilterName = '';
@@ -672,6 +682,11 @@
         function changeStudioPage(direction) {
             currentStudioPage += direction;
             loadStudios();
+        }
+
+        function changeAlbumPage(direction) {
+            currentAlbumPage += direction;
+            loadAlbums();
         }
 
         function deleteBand(id) {
@@ -1036,14 +1051,18 @@
 
 
 function loadAlbums() {
-    fetch(ALBUM_API_URL)
+    // Construct the URL with pagination parameters
+    const url = `${ALBUM_API_URL}?page=${currentAlbumPage}&size=10`; // Using a fixed size of 10
+
+    fetch(url)
         .then(response => response.json())
         .then(data => {
             const tableBody = document.querySelector('#albumsTable tbody');
             if (!tableBody) return;
             tableBody.innerHTML = '';
 
-            albums = Array.isArray(data) ? data : [];
+            // Use data.content for the array of albums
+            albums = Array.isArray(data.content) ? data.content : [];
 
             albums.forEach(album => {
                 const row = tableBody.insertRow();
@@ -1060,6 +1079,14 @@ function loadAlbums() {
                 `;
             });
             updateAlbumSelects();
+
+            // --- 👇 UPDATE PAGINATION UI 👇 ---
+            currentAlbumPage = data.number;
+            totalAlbumPages = data.totalPages;
+            document.getElementById('albumPageInfo').textContent = `Page ${currentAlbumPage + 1} of ${totalAlbumPages}`;
+            document.getElementById('prevAlbumPage').disabled = data.first;
+            document.getElementById('nextAlbumPage').disabled = data.last;
+            // --- 👆 END OF UPDATE 👆 ---
         })
         .catch(error => {
             console.error('Error loading albums:', error);

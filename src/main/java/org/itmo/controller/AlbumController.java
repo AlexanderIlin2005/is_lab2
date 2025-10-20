@@ -6,6 +6,10 @@ import org.springframework.web.bind.annotation.*;
 import org.itmo.service.AlbumService;
 import org.itmo.model.Album;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import jakarta.validation.Valid;
 import java.util.List;
 
@@ -19,8 +23,10 @@ public class AlbumController {
     }
 
     @GetMapping
-    public List<Album> getAllAlbums() {
-        return albumService.getAll();
+    public Page<Album> getAllAlbums(@RequestParam(defaultValue = "0") int page,
+                                    @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return albumService.getAll(pageable);
     }
 
     @GetMapping("/{id}")

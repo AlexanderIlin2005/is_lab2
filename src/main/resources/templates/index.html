@@ -1051,8 +1051,8 @@
 
 
 function loadAlbums() {
-    // Construct the URL with pagination parameters
-    const url = `${ALBUM_API_URL}?page=${currentAlbumPage}&size=10`; // Using a fixed size of 10
+
+    const url = `${ALBUM_API_URL}?page=${currentAlbumPage}&size=10`;
 
     fetch(url)
         .then(response => response.json())
@@ -1061,7 +1061,7 @@ function loadAlbums() {
             if (!tableBody) return;
             tableBody.innerHTML = '';
 
-            // Use data.content for the array of albums
+
             albums = Array.isArray(data.content) ? data.content : [];
 
             albums.forEach(album => {
@@ -1080,13 +1080,13 @@ function loadAlbums() {
             });
             updateAlbumSelects();
 
-            // --- 👇 UPDATE PAGINATION UI 👇 ---
+
             currentAlbumPage = data.number;
             totalAlbumPages = data.totalPages;
             document.getElementById('albumPageInfo').textContent = `Page ${currentAlbumPage + 1} of ${totalAlbumPages}`;
             document.getElementById('prevAlbumPage').disabled = data.first;
             document.getElementById('nextAlbumPage').disabled = data.last;
-            // --- 👆 END OF UPDATE 👆 ---
+
         })
         .catch(error => {
             console.error('Error loading albums:', error);

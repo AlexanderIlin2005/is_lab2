@@ -13,8 +13,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+// --- NECESSARY IMPORTS ---
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import java.util.Map; // For response bodies
+// --- END IMPORTS ---
+
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/music-bands")
@@ -93,4 +99,35 @@ public class MusicBandController {
         long newCount = musicBandService.removeParticipant(id);
         return Map.of("numberOfParticipants", newCount);
     }
+
+    // --- NEW IMPORT ENDPOINT ---
+    @PostMapping("/import")
+    public ResponseEntity<?> importBandsFromXml(@RequestParam("file") MultipartFile file) {
+        // Basic file checks
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Please select an XML file to upload."));
+        }
+        // Check content type (optional but recommended)
+        String contentType = file.getContentType();
+        if (contentType == null || (!contentType.equals("application/xml") && !contentType.equals("text/xml"))) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid file type. Please upload an XML file. Mime type was: " + contentType));
+        }
+
+        try {
+            // Call the transactional service method
+            List<MusicBandResponseDto> importedBands = musicBandService.importFromXml(file);
+            // Return success response
+            return ResponseEntity.ok(Map.of(
+                    "message", "Successfully imported " + importedBands.size() + " music bands.",
+                    "importedCount", importedBands.size()
+            ));
+        } catch (IllegalArgumentException e) { // Catch validation errors specifically
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Import failed due to validation: " + e.getMessage()));
+        } catch (RuntimeException e) { // Catch other runtime errors (like parsing, DB issues)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Import failed: " + e.getMessage()));
+        } catch (Exception e) { // Catch unexpected errors
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "An unexpected error occurred during import: " + e.getMessage()));
+        }
+    }
+    // --- END OF IMPORT ENDPOINT ---
 }

@@ -11,6 +11,12 @@ import org.springframework.orm.jpa.vendor.EclipseLinkJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+// --- ADD THESE IMPORTS ---
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+// --- END IMPORTS ---
+
 @Configuration
 @ComponentScan("org.itmo") // Сканируем весь пакет org.itmo
 @EnableJpaRepositories(basePackages = "org.itmo.repository")
@@ -31,4 +37,15 @@ public class AppConfig {
         transactionManager.setEntityManagerFactory(emf);
         return transactionManager;
     }
+
+    // --- 👇 ADD THIS BEAN DEFINITION 👇 ---
+    @Bean
+    public Validator validator() {
+        // Create the default ValidatorFactory
+        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+            // Get the Validator instance from the factory
+            return factory.getValidator();
+        }
+    }
+    // --- 👆 END OF BEAN DEFINITION 👆 ---
 }

@@ -39,7 +39,7 @@ ext {
 }
 
 dependencies {
-    // Spring Core & MVC
+    // Spring Core & MVCс
     implementation "org.springframework:spring-webmvc:${springVersion}"
     implementation "org.springframework:spring-orm:${springVersion}"
 

@@ -75,6 +75,7 @@
             <li><a href="#studios-section" class="nav-link">Studios</a></li>
             <li><a href="#albums-section" class="nav-link">Albums</a></li> <li>
             <li><a href="#operations-section" class="nav-link">Special Operations</a></li>
+            <li><a href="#import-section" class="nav-link">Import XML</a></li>
         </ul>
     </nav>
 
@@ -227,6 +228,18 @@
                     <button type="submit" class="btn-warning">Remove Participant</button>
                 </form>
             </div>
+        </div>
+    </div>
+
+    <div id="import-section" class="section">
+        <h2>Import Music Bands from XML</h2>
+        <div class="import-controls" style="padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+            <form id="importForm" onsubmit="handleImportSubmit(event)">
+                <label for="xmlFile" style="display: block; margin-bottom: 10px;">Select XML file to import:</label>
+                <input type="file" id="xmlFile" name="file" accept=".xml,text/xml,application/xml" required style="margin-bottom: 15px;">
+                <button type="submit" class="btn-info">Upload and Import</button>
+            </form>
+            <div id="importResult" style="margin-top: 20px;"></div>
         </div>
     </div>
 
@@ -1199,6 +1212,64 @@ function updateAlbumSelects() {
     if (currentValue && Array.from(bestAlbumSelect.options).some(opt => opt.value == currentValue)) {
         bestAlbumSelect.value = currentValue;
     }
+}
+
+// --- NEW FUNCTION FOR XML IMPORT ---
+function handleImportSubmit(event) {
+    event.preventDefault(); // Stop default form submission
+
+    const fileInput = document.getElementById('xmlFile');
+    const importResultDiv = document.getElementById('importResult'); // Still needed to clear
+    importResultDiv.innerHTML = ''; // Clear previous message
+
+    if (!fileInput.files || fileInput.files.length === 0) {
+        showError('Please select an XML file.'); // Use your existing showError
+        return;
+    }
+
+    const file = fileInput.files[0];
+
+    // Frontend type check (basic)
+    if (!file.type.includes('xml')) {
+         showError('Invalid file type. Please select an XML file.');
+         return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file); // 'file' must match @RequestParam in Controller
+
+    // Use showInfo for processing message
+    showInfo("Uploading and processing... Please wait."); // Replaces direct div manipulation
+
+    fetch(`${API_URL}/import`, { // Post to the new endpoint
+        method: 'POST',
+        body: formData,
+        // Content-Type is set automatically by the browser for FormData
+    })
+    .then(response => {
+        // Always parse JSON first to get potential error messages from backend
+        return response.json().then(data => ({ ok: response.ok, status: response.status, body: data }));
+    })
+    .then(({ ok, status, body }) => {
+        if (ok) {
+            // Use your existing showSuccess
+            showSuccess(body.message || `Successfully imported ${body.importedCount} bands.`);
+            loadBands(); // Refresh band list if import was successful
+        } else {
+            // Handle errors reported by the backend (validation, etc.)
+            throw new Error(body.error || `Import failed with status ${status}`);
+        }
+    })
+    .catch(error => {
+        console.error('Import Error:', error);
+        // Use your existing showError function
+        showError('Import Error: ' + error.message);
+        // Optional: still show error near the form if desired, but showInfo/showError is usually enough
+        // importResultDiv.innerHTML = `<div class="error-message">❌ ${error.message}</div>`;
+    })
+    .finally(() => {
+        fileInput.value = ''; // Reset file input
+    });
 }
 
 

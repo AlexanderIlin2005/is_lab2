@@ -16,12 +16,12 @@ import java.util.List;
 public class StudioController {
     private final StudioService studioService;
 
-    @GetMapping
+    @GetMapping(produces = "application/json")
     public List<Studio> getAll() {
         return studioService.getAll();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(value="/{id}", produces = "application/json")
     public Studio getById(@PathVariable Long id) {
         return studioService.getById(id);
     }

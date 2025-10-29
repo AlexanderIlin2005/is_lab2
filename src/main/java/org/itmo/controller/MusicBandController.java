@@ -31,7 +31,7 @@ public class MusicBandController {
         this.musicBandService = musicBandService;
     }
 
-    @GetMapping
+    @GetMapping(produces = "application/json")
     public Page<MusicBandResponseDto> list(@RequestParam(defaultValue = "0") int page,
                                            @RequestParam(defaultValue = "10") int size,
                                            @RequestParam(required = false) String sort,
@@ -46,7 +46,7 @@ public class MusicBandController {
         return musicBandService.list(nameEquals, pageable);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(value="/{id}", produces = "application/json")
     public MusicBandResponseDto get(@PathVariable Long id) {
         return musicBandService.get(id);
     }
@@ -77,19 +77,19 @@ public class MusicBandController {
         return Map.of("deleted", 0);
     }
 
-    @GetMapping("/average-album-count")
+    @GetMapping(value="/average-album-count", produces = "application/json")
     public Map<String, Object> getAverageAlbumCount() {
         Double average = musicBandService.getAverageAlbumCount();
         return Map.of("average", average != null ? average : 0);
     }
 
-    @GetMapping("/count-by-studio")
+    @GetMapping(value="/count-by-studio", produces = "application/json")
     public Map<String, Object> countByStudioNameGreaterThan(@RequestParam String studioName) {
         long count = musicBandService.countByStudioNameGreaterThan(studioName);
         return Map.of("count", count);
     }
 
-    @GetMapping("/by-genre/{genre}")
+    @GetMapping(value="/by-genre/{genre}", produces = "application/json")
     public List<MusicBandResponseDto> findByGenre(@PathVariable MusicGenre genre) {
         return musicBandService.findByGenre(genre);
     }

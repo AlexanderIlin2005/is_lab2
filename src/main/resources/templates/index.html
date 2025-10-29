@@ -750,7 +750,7 @@
                 document.getElementById('albumCount').value = band.albumCount;
 
 
-                const dt = new Date(band.establishmentDate);
+                const dt = new Date(band.establishmentDate * 1000);
                 document.getElementById('establishmentDate').value = new Date(dt.getTime() - (dt.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
 
                 document.getElementById('coordinatesX').value = band.coordinates.x;

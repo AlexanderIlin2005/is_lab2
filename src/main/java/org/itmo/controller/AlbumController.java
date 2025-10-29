@@ -22,14 +22,14 @@ public class AlbumController {
         this.albumService = albumService;
     }
 
-    @GetMapping
+    @GetMapping(produces = "application/json")
     public Page<Album> getAllAlbums(@RequestParam(defaultValue = "0") int page,
                                     @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         return albumService.getAll(pageable);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(value="/{id}", produces = "application/json")
     public ResponseEntity<Album> getAlbumById(@PathVariable Long id) {
         return ResponseEntity.ok(albumService.getById(id));
     }

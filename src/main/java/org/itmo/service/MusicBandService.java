@@ -16,22 +16,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
-// --- NECESSARY IMPORTS ---
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule; // For ZonedDateTime parsing
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator; // Jakarta Bean Validation
-import org.itmo.dto.MusicBandsXmlDto; // Your new DTO
-import org.springframework.web.multipart.MultipartFile;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Set;
-// --- END IMPORTS ---
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import com.fasterxml.jackson.databind.SerializationFeature; // <-- NEW
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;     // <-- NEW
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule; // <-- NEW (для ZonedDateTime)
+import jakarta.validation.ConstraintViolation; // <-- NEW
+import jakarta.validation.Validator;           // <-- NEW
+import org.itmo.dto.MusicBandsXmlDto;         // <-- NEW
+import org.springframework.web.multipart.MultipartFile; // <-- NEW
+import org.springframework.beans.factory.annotation.Autowired; // <-- NEW
+import java.io.InputStream;                     // <-- NEW
+import java.util.ArrayList;                     // <-- NEW
+import java.util.Set;                           // <-- NEW
+
 
 @Service
 @Transactional
@@ -40,18 +40,19 @@ public class MusicBandService {
     private final AlbumRepository albumRepository;
     private final CoordinatesRepository coordinatesRepository;
     private final StudioRepository studioRepository;
-    //private final MusicBandEventsPublisher eventsPublisher;
     private final MusicBandMapper musicBandMapper;
     private final SimpMessagingTemplate messagingTemplate;
-    private final Validator validator; // Inject Validator
+
+    @Autowired
+    private Validator validator;
 
     public MusicBandService(MusicBandRepository musicBandRepository,
                             AlbumRepository albumRepository,
                             CoordinatesRepository coordinatesRepository,
                             StudioRepository studioRepository,
                             MusicBandMapper musicBandMapper,
-                            SimpMessagingTemplate messagingTemplate,
-                            Validator validator) {
+                            SimpMessagingTemplate messagingTemplate
+    ) {
         this.musicBandRepository = musicBandRepository;
         this.albumRepository = albumRepository;
         this.coordinatesRepository = coordinatesRepository;
@@ -59,7 +60,7 @@ public class MusicBandService {
         //this.eventsPublisher = eventsPublisher;
         this.musicBandMapper = musicBandMapper;
         this.messagingTemplate = messagingTemplate;
-        this.validator = validator; // Initialize validator
+
     }
 
 
@@ -236,58 +237,49 @@ public class MusicBandService {
     }
 
     // --- NEW IMPORT METHOD ---
-    @Transactional // Ensures atomicity: either all import or none
+    @Transactional
     public List<MusicBandResponseDto> importFromXml(MultipartFile file) throws Exception {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("Import file cannot be empty.");
         }
 
-        // Configure XmlMapper for ZonedDateTime
+        // Конфигурируем XmlMapper
         XmlMapper xmlMapper = new XmlMapper();
         xmlMapper.registerModule(new JavaTimeModule());
-        xmlMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Use ISO strings
+        xmlMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         List<MusicBandResponseDto> createdBands = new ArrayList<>();
         try (InputStream inputStream = file.getInputStream()) {
-            // Deserialize XML into the wrapper DTO
+            // Десериализация XML в DTO
             MusicBandsXmlDto importData = xmlMapper.readValue(inputStream, MusicBandsXmlDto.class);
 
             if (importData == null || importData.getMusicBands() == null || importData.getMusicBands().isEmpty()) {
                 throw new IllegalArgumentException("XML file does not contain any valid 'musicBand' elements or is malformed.");
             }
 
-            // Process each band within the transaction
             for (MusicBandCreateDto dto : importData.getMusicBands()) {
-                // 1. Standard Bean Validation (checks @NotNull, @Min, etc.)
-                Set<ConstraintViolation<MusicBandCreateDto>> violations = validator.validate(dto);
+                // 1. Валидация DTO с помощью внедрённого this.validator
+                Set<ConstraintViolation<MusicBandCreateDto>> violations = this.validator.validate(dto);
                 if (!violations.isEmpty()) {
                     StringBuilder errorMsg = new StringBuilder("Validation failed for band '")
                             .append(dto.getName() != null ? dto.getName() : "[Unknown Name]")
                             .append("': ");
                     violations.forEach(v -> errorMsg.append(v.getPropertyPath()).append(" ").append(v.getMessage()).append("; "));
-                    // Throw exception to trigger transaction rollback
                     throw new IllegalArgumentException(errorMsg.toString());
                 }
 
-                // 2. Add custom business logic validation here if needed
-                // (e.g., uniqueness constraints not covered by DB/JPA)
-
-                // 3. Use the existing 'create' method which handles entity linking
-                // If 'create' fails for any reason, the transaction rolls back
+                // 2. Используем существующий метод create, который обрабатывает все связи
                 createdBands.add(this.create(dto));
             }
         } catch (Exception e) {
-            // Log the specific error
             System.err.println("XML Import failed: " + e.getMessage());
-            // Rethrow to ensure transaction rollback and inform the controller
+            // Перебрасываем RuntimeException для отката транзакции
             throw new RuntimeException("Import failed: " + e.getMessage(), e);
         }
 
-        // If transaction commits successfully, notify clients
         if (!createdBands.isEmpty()) {
-            notifyClients("BANDS_IMPORTED"); // Use a specific message type if needed
+            notifyClients("BANDS_IMPORTED");
         }
         return createdBands;
     }
-    // --- END OF IMPORT METHOD ---
 }
